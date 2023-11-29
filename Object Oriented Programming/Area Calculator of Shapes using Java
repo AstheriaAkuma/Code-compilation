@@ -1,0 +1,165 @@
+/* Calculator Program */
+
+/* Note: Each class has different files */
+
+
+//Parent Class: Shape
+
+/*	This class serves as a base for different shapes, 
+	providing a method to calculate their areas.		
+*/
+
+public class Shape {
+    public double calculateArea() {
+        return 0;
+    }
+}
+
+//Square Class
+
+/* Represents a square shape that extends the Shape class */
+
+public class Square extends Shape {
+    private double side;
+
+    public Square(double side) {
+        this.side = side;
+    }
+
+    @Override // Overrides the calculateArea() method inherited from the Shape superclass
+    public double calculateArea() {
+	// Calculating area for a square
+        return side * side;
+    }
+}
+
+//Rectangle Class
+
+/* Represents a rectangle shape that extends the Shape class */
+
+public class Rectangle extends Shape {
+    private double length;
+    private double width;
+
+    public Rectangle(double length, double width) {
+        this.length = length;
+        this.width = width;
+    }
+
+    @Override // Overrides the calculateArea() method inherited from the Shape superclass
+    public double calculateArea() {
+	// Calculating area for a rectangle
+        return length * width;
+    }
+}
+
+// Circle Class
+/* Represents a circle shape that extends the Shape class */
+
+import java.text.DecimalFormat;
+
+public class Circle extends Shape {
+    private double radius;
+
+    public Circle(double radius) {
+        this.radius = radius;
+    }
+
+    @Override // Overrides the calculateArea() method inherited from the Shape superclass
+    public double calculateArea() {
+        // Calculating the diameter of a circle
+        double diameter = 2 * radius;
+        DecimalFormat df = new DecimalFormat("#.##"); // Set the decimal format
+        return Double.parseDouble(df.format(diameter)); 
+    }
+}
+
+// Main Class: AreaCalculator
+
+/* 	This class handles area calculations for shapes (square, rectangle, circle)
+	through a menu-driven interface.
+*/
+
+import java.util.InputMismatchException;
+import java.util.Scanner;
+
+public class AreaCalculator {
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        int choice;
+
+        do {
+            // Displaying options
+            System.out.print("\nCalculate the area of:\n" +
+                                "----------------------\n" +
+                                "1. Square\n" + 
+                                "2. Rectangle\n" +
+                                "3. Circle\n" +
+                                "0. Exit\n"
+                                );
+            System.out.print("Enter your choice: ");
+
+            try { // Reading user choice
+                choice = scanner.nextInt();
+
+                // Cases for different shapes
+		switch (choice) {
+		    
+                    case 1: // Area calculation for a Square 
+                        System.out.print("Enter the side: ");
+                        double side = readDouble(scanner);
+                        Square square = new Square(side);
+                        displayArea("Area of the square", square.calculateArea());
+                        break;
+
+                    case 2: // Area calculation for a Rectangle
+                        System.out.print("Enter the length: ");
+                        double length = readDouble(scanner);
+                        System.out.print("Enter the width: ");
+                        double width = readDouble(scanner);
+                        Rectangle rectangle = new Rectangle(length, width);
+                        displayArea("Area of the rectangle", rectangle.calculateArea());
+                        break;
+
+                    case 3: // Diameter Calculation of a Circle
+                        System.out.print("Enter the radius: ");
+                        double radius = readDouble(scanner);
+                        Circle circle = new Circle(radius);
+                        displayArea("Diameter of a circle", circle.calculateArea());
+                        break;
+
+                    case 0: // Exit message
+                        System.out.println("Exiting...");
+                        break;
+
+                    default: // Handling invalid choice
+                        System.out.println("Invalid choice! Please enter again.");
+                }
+
+            } 	
+		// Explanation for handling non-numeric input
+		catch (InputMismatchException e){ 
+                System.out.println("Invalid input! Please enter a number.");
+                scanner.next(); // Clear the invalid input
+                choice = -1; //Set choice to an invalid value to continue the loop
+            }
+
+        } while (choice != 0);
+
+        scanner.close();
+    }
+
+    // Method to read a valid double input
+    public static double readDouble(Scanner scanner) {
+        while (!scanner.hasNextDouble()) {
+            System.out.println("Invalid input! Please enter a number.");
+            scanner.next(); // Clear the invalid input
+        }
+        return scanner.nextDouble();
+    }
+
+    // Method to display the calculated area 
+    public static void displayArea(String message, double area) {
+        System.out.println(message + ": " + area);
+    }
+}
