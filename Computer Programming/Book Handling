@@ -1,0 +1,186 @@
+// This program allows users to add new book entries, modify book quantities, and display existing records.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdbool.h>
+
+#define MAX_BOOKS 100
+#define MAX_TITLE_LENGTH 100
+#define FILENAME "book_records.dat"
+
+typedef struct {
+    int bookNo;
+    char book_title[MAX_TITLE_LENGTH];
+    char book_author[MAX_TITLE_LENGTH];
+    int book_qty;
+} BookRecord;
+
+// Function that checks if a book number already exists in the file
+bool isBookNumberExists(FILE *file, int bookNo) {
+    fseek(file, 0, SEEK_SET);
+    BookRecord temp;
+    while (fread(&temp, sizeof(BookRecord), 1, file) == 1) {
+        if (temp.bookNo == bookNo) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// Function to add a new book record to the file
+void enterNewRecord(FILE *file, int *numBooks) {
+    if (*numBooks >= MAX_BOOKS) {
+        printf("Library is full. Cannot add more records.\n");
+        return;
+    }
+
+    BookRecord newBook;
+    printf("Enter Book Number: ");
+    scanf("%d", &newBook.bookNo);
+    getchar(); 
+
+    // Checks if the book number already exists 
+    if (isBookNumberExists(file, newBook.bookNo)) {
+        printf("Book number already exists. Please enter a different book number.\n");
+        return;
+    }
+
+    printf("Enter Book Title: ");
+    fgets(newBook.book_title, sizeof(newBook.book_title), stdin);
+    newBook.book_title[strcspn(newBook.book_title, "\n")] = '\0'; 
+
+    printf("Enter Book Author: ");
+    fgets(newBook.book_author, sizeof(newBook.book_author), stdin);
+    newBook.book_author[strcspn(newBook.book_author, "\n")] = '\0'; 
+
+    int newQuantity;
+    do {
+        printf("Enter Book Quantity: ");
+        scanf("%d", &newQuantity);
+        getchar(); 
+
+        if (newQuantity < 0) {
+            printf("Invalid quantity. Please enter a non-negative value.\n");
+        }
+    } while (newQuantity < 0);
+
+    newBook.book_qty = newQuantity;
+
+    fseek(file, 0, SEEK_END);
+    fwrite(&newBook, sizeof(BookRecord), 1, file);
+    (*numBooks)++;
+    printf("Record added successfully!\n");
+}
+
+// Function that is used to modify the quantity of a book in a file
+void changeBookQuantity(FILE *file, BookRecord books[], int numBooks) {
+    if (numBooks == 0) {
+        printf("No records available. Please add records first.\n");
+        return;
+    }
+
+    int bookNumber, newQuantity;
+    printf("Enter the book number to change quantity: ");
+    scanf("%d", &bookNumber);
+
+    int bookIndex = -1;
+    BookRecord book;
+
+    // Find the book with the given bookNumber in the file
+    while (fread(&book, sizeof(BookRecord), 1, file) == 1) {
+        if (book.bookNo == bookNumber) {
+            bookIndex = ftell(file) - sizeof(BookRecord);
+            break;
+        }
+    }
+
+    // If the book number is not found in the file
+    if (bookIndex == -1) {
+        printf("Book number not found.\n");
+        return;
+    }
+
+    printf("Enter the new quantity: ");
+    scanf("%d", &newQuantity);
+    book.book_qty = newQuantity;
+
+    fseek(file, bookIndex, SEEK_SET);
+    fwrite(&book, sizeof(BookRecord), 1, file);
+
+    printf("Quantity changed successfully!\n");
+}
+
+
+// Function that displays all of the book records in the file
+void displayRecords(FILE *file, int numBooks) {
+    if (numBooks == 0) {
+        printf("No records available. Please add records first.\n");
+        return;
+    }
+
+    BookRecord book;
+    fseek(file, 0, SEEK_SET);
+
+    printf("---------------------------------------------------------------\n");
+    printf("Book Number | Title             | Author           | Quantity\n");
+    printf("---------------------------------------------------------------\n");
+
+    while (fread(&book, sizeof(BookRecord), 1, file) == 1) {
+        // Remove newline character from book title and author
+        book.book_title[strcspn(book.book_title, "\n")] = '\0';
+        book.book_author[strcspn(book.book_author, "\n")] = '\0';
+
+        printf("%-11d | %-17s | %-17s | %-8d\n", book.bookNo, book.book_title, book.book_author, book.book_qty);
+    }
+
+    printf("---------------------------------------------------------------\n");
+}
+
+int main() {
+    FILE *file = fopen(FILENAME, "r+");
+    if (file == NULL) {
+        file = fopen(FILENAME, "w+");
+        if (file == NULL) {
+            printf("Failed to open the file.\n");
+            return 1;
+        }
+    }
+
+    int numBooks = 0;
+    BookRecord books[MAX_BOOKS];
+
+    // Read existing records from the file into the array
+    fseek(file, 0, SEEK_SET);
+    while (fread(&books[numBooks], sizeof(BookRecord), 1, file) == 1) {
+        numBooks++;
+    }
+
+    while (1) {
+        int choice;
+        printf("\nABC Library Management System\n");
+        printf("1. Enter new record\n");
+        printf("2. Change book quantity\n");
+        printf("3. Display records\n");
+        printf("0. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                enterNewRecord(file, &numBooks);
+                break;
+            case 2:
+    			changeBookQuantity(file, books, numBooks);
+    			break;
+            case 3:
+                displayRecords(file, numBooks);
+                break;
+            case 0:
+                fclose(file);
+                printf("Thank you for using ABC Library Management System. Goodbye!\n");
+                return 0;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
+}
